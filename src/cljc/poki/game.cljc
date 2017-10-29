@@ -59,15 +59,23 @@
       acc-state
       (next-player acc-state))))
 
+
+
+
+(defn roll-done
+  "Roll efect"
+  [state value]
+  (if
+    (= value 1)
+    (one state)
+    (dice state value)))
+
+
+
 (defn do-dice
   "Dice decision"
   [state roller]
-  (let
-    [val (roller)]
-    (if
-      (= val 1)
-      (one state)
-      (dice state val))))
+  (roll-done state (roller)))
 
 ;; Function for dice
 (defn random-dice []
