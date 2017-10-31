@@ -1,5 +1,7 @@
-((ns poki.db
-  (:require [poki.game :as game])))
+(ns poki.db
+  (:require [poki.game :as game]))
 
 (def default-db
-   (game/initial-state 2 50))
+   (merge
+     (game/initial-state 2 50)
+     {:rolling? false :last-roll ""}))

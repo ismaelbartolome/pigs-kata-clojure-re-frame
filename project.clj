@@ -58,7 +58,7 @@
 
 
     {:id           "min"
-     :source-paths ["src/cljs"]
+     :source-paths ["src/cljs" "src/cljc"]
      :compiler     {:main            poki.core
                     :output-to       "resources/public/js/compiled/app.js"
                     :optimizations   :advanced

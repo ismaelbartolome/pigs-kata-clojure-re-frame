@@ -29,10 +29,15 @@
 (re-frame/reg-event-db
   ::roll-received
   (fn
-    [db [_ response]]           ;; destructure the response from the event vector
-    (-> db
-        (assoc :rolling? false) ;; take away that "Loading ..." UI
-        (game/roll-done (:roll-result (js->clj response))))))  ;; fairly lame processing
+    [db [_ response]] ;; destructure the response from the event vector
+    (let
+       [value (:roll-result (js->clj response))]
+
+
+       (-> db
+           (assoc :rolling? false) ;; take away that "Loading ..." UI
+           (assoc :last-roll value)
+           (game/roll-done value)))))  ;; fairly lame processing
 
 (re-frame/reg-event-db
   ::bad-response

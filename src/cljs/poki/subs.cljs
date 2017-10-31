@@ -32,3 +32,12 @@
   (fn [db]
     (:round db)))
 
+(re-frame/reg-sub
+  ::rolling?
+  (fn [db]
+      (:rolling? db)))
+
+(re-frame/reg-sub
+  ::last-roll
+  (fn [db]
+    (str (:last-roll db))))
