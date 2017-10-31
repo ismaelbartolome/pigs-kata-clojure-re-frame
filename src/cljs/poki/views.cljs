@@ -23,8 +23,9 @@
       (if
         @rolling?
         [:img {:src "images/dado.gif"}]
-        [:div @last-roll])
-      [:button {:on-click #(re-frame/dispatch [:poki.events/roll-remote])} "Roll me please"]
-      [:button {:on-click #(re-frame/dispatch [:poki.events/hold])} "Hold!"]]
+        [:div
+         [:div @last-roll]
+         [:button {:on-click #(re-frame/dispatch [:poki.events/roll-remote])} "Roll me please"]
+         [:button {:on-click #(re-frame/dispatch [:poki.events/hold])} "Hold!"]])]
 
      [:div "The Winner is " @current-player])))
