@@ -25,7 +25,7 @@
         [:img {:src "images/dado.gif"}]
         [:div
          [:div @last-roll]
-         [:button {:on-click #(re-frame/dispatch [:poki.events/roll-remote])} "Roll me please"]
+         [:button {:on-click #(re-frame/dispatch [:poki.events/roll-cofx])} "Roll me please"]
          [:button {:on-click #(re-frame/dispatch [:poki.events/hold])} "Hold!"]])]
 
      [:div "The Winner is " @current-player])))
