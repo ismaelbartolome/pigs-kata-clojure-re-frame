@@ -31,28 +31,37 @@
                   :response-format (ajax/json-response-format {:keywords? true})
                   :on-success      [::roll-received]
                   :on-failure      [::bad-response]}
-     :db  (assoc db :rolling? true)}))
+     :db  (assoc db :game-state :rolling)}))
 
 
-(re-frame/reg-event-db
+(re-frame/reg-event-fx
   ::roll-received
   (fn
-    [db [_ response]] ;; destructure the response from the event vector
+    [{db :db} [_ response]] ;; destructure the response from the event vector
     (let
        [value (:roll-result (js->clj response))]
 
+       {
+        :db(-> db
+             (assoc :game-state :showing-luck) ;; take away that "Loading ..." UI
+             (assoc :last-roll value))
 
-       (-> db
-           (assoc :rolling? false) ;; take away that "Loading ..." UI
-           (assoc :last-roll value)
-           (game/roll-done value)))))  ;; fairly lame processing
+        :dispatch-later [{:ms 1000 :dispatch [::roll-shown value]}]})))
+
+(re-frame/reg-event-db
+  ::roll-shown
+  (fn
+    [ db [_ value]]
+    (-> db
+        (assoc :game-state :waiting-player)
+        (game/roll-done value))))
 
 (re-frame/reg-event-db
   ::bad-response
   (fn
     [db [_ response]]           ;; destructure the response from the event vector
     (-> db
-        (assoc :rolling? false) ;; take away that "Loading ..." UI
+        (assoc :game-state :waiting-player) ;; take away that "Loading ..." UI
         (assoc :error (js->clj response)))))  ;; fairly lame processing
 
 

@@ -4,4 +4,5 @@
 (def default-db
    (merge
      (game/initial-state 2 50)
-     {:rolling? false :last-roll ""}))
+     {:game-state :waiting-player  ;; :rolling  :showing-luck
+      :last-roll ""}))

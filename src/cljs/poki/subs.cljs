@@ -15,7 +15,7 @@
 (re-frame/reg-sub
   ::current-score
   (fn [db]
-    (str (:turn db))))
+    (:turn db)))
 
 (re-frame/reg-sub
   ::is-game-over
@@ -25,7 +25,7 @@
 (re-frame/reg-sub
   ::game-score
   (fn [db]
-    (str (:points db))))
+    (:points db)))
 
 (re-frame/reg-sub
   ::round
@@ -33,11 +33,11 @@
     (:round db)))
 
 (re-frame/reg-sub
-  ::rolling?
+  ::game-state
   (fn [db]
-      (:rolling? db)))
+    (:game-state db)))
 
 (re-frame/reg-sub
   ::last-roll
   (fn [db]
-    (str (:last-roll db))))
+    (:last-roll db)))

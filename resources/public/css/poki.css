@@ -1,0 +1,38 @@
+.players {
+    display : flex;
+    align-content: center;
+    align-items: center;
+    justify-content: center;
+
+
+}
+.player {
+    margin: 0 5px; // Alternatively: padding: 0 5px;
+    flex: 1 0 auto;
+    text-align: center;
+    with: 1px;
+}
+.current {
+    background: lightgreen;
+    margin: 0 10px;
+}
+.buttons {
+    display: flex;
+    justify-content: center;
+}
+.buttonbox {
+    flex: 0 0;
+    margin: 0 5px;
+
+}
+.button {
+    background-color: gray; /* Green */
+    border: none;
+    color: white;
+    padding: 10px 16px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+}
+

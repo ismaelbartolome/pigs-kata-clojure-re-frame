@@ -10,7 +10,7 @@
 (defn roll-response
   []
   (do
-    (Thread/sleep 3000)
+    (Thread/sleep 1000)
     (json/write-str
       {
        :roll-result (game/random-dice)})))

@@ -1,6 +1,41 @@
 (ns poki.views
   (:require [re-frame.core :as re-frame]
-            [poki.subs :as subs]))
+            [poki.subs :as subs]
+            [clojure.string :as string]))
+
+
+(defn roll-section [ n game-state last-roll]
+  (condp = game-state
+    :rolling   [:img { :src "images/dado.gif"}]
+    :showing-luck [:h4 (str last-roll)]
+    :waiting-player
+        [:div.buttons
+           [:div.butttonbox
+               [:button.button
+                  {:on-click #(re-frame/dispatch [:poki.events/roll-remote])}
+                  "Roll"]]
+           [:div.buttonbox
+               [:button.button
+                  {:on-click #(re-frame/dispatch [:poki.events/hold])}
+                  "Hold!"]]]))
+
+
+(defn player-actual-box
+  [n score round-score rolling? last-roll]
+
+  [:div.player.current {:key (str "player-" n)}
+    [:div  "Player " (str (inc n))]
+    [:div  "Score:" score]
+    [:div  "Turn"  (str round-score)]
+    (roll-section n rolling? last-roll)])
+
+(defn player-box
+  [ n score]
+  [:div.player {:key (str "player-" n)}
+    [:div  "Player :" (str (inc n))]
+    [:div  "Score  :" score]])
+
+
 
 
 (defn main-panel []
@@ -10,22 +45,39 @@
         game-score (re-frame/subscribe [::subs/game-score])
         round (re-frame/subscribe [::subs/round])
         is-game-over (re-frame/subscribe [::subs/is-game-over])
-        rolling? (re-frame/subscribe [::subs/rolling?])
+        game-state (re-frame/subscribe [::subs/game-state])
         last-roll (re-frame/subscribe [::subs/last-roll])]
 
-    (if-not @is-game-over
-     [:div
-      [:div "Total players: " @players]
-      [:div "current player: " @current-player]
-      [:div "current score: " @current-score]
-      [:div "score: " @game-score]
-      [:div "round: " @round]
-      (if
-        @rolling?
-        [:img {:src "images/dado.gif"}]
-        [:div
-         [:div @last-roll]
-         [:button {:on-click #(re-frame/dispatch [:poki.events/roll-cofx])} "Roll me please"]
-         [:button {:on-click #(re-frame/dispatch [:poki.events/hold])} "Hold!"]])]
 
-     [:div "The Winner is " @current-player])))
+    [:div
+     [:h1 "Pig dice game"]
+     (if @is-game-over
+       [:div "The Winner is " @current-player])
+
+     (let
+        [current @current-player
+         players-score @game-score
+         v-current-score @current-score
+         v-game-state @game-state
+         v-last-roll @last-roll
+         game-over? @is-game-over]
+        [:div.players
+         (for
+           [player (range @players)]
+           (if
+             (and (not game-over?) (= current player))
+             (player-actual-box
+               player
+               (players-score player)
+               v-current-score
+               v-game-state
+               v-last-roll)
+             (player-box
+               player
+               (players-score player))))])]))
+     ;[:div
+     ; [:div "Total players: " (str @players)]
+     ; [:div "current player: " (str @current-player)]
+     ; [:div "current score: " (str @current-score)]
+     ; [:div "score: " (str @game-score)]
+     ; [:div "round: " (str @round)]]]))
