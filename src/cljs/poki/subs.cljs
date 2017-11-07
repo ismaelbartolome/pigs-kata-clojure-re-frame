@@ -41,3 +41,9 @@
   ::last-roll
   (fn [db]
     (:last-roll db)))
+
+
+(re-frame/reg-sub
+  ::goal
+  (fn [db]
+    (:win-points db)))

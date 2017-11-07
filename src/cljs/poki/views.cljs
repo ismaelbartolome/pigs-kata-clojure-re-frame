@@ -26,7 +26,7 @@
   [:div.player.current {:key (str "player-" n)}
     [:div  "Player " (str (inc n))]
     [:div  "Score:" score]
-    [:div  "Turn"  (str round-score)]
+    [:div    (string/join "-" round-score)]
     (roll-section n rolling? last-roll)])
 
 (defn player-box
@@ -46,13 +46,18 @@
         round (re-frame/subscribe [::subs/round])
         is-game-over (re-frame/subscribe [::subs/is-game-over])
         game-state (re-frame/subscribe [::subs/game-state])
-        last-roll (re-frame/subscribe [::subs/last-roll])]
+        last-roll (re-frame/subscribe [::subs/last-roll])
+        goal (re-frame/subscribe [::subs/goal])]
 
 
-    [:div
-     [:h1 "Pig dice game"]
-     (if @is-game-over
-       [:div "The Winner is " @current-player])
+    [:div.playboard
+     [:div.head
+        [:h1 "Pig dice game"]
+        [:div "Goal:" (str @goal)]
+        (if @is-game-over
+          [:h1 "The Winner is " (inc @current-player)])
+        [:br]
+        [:br]]
 
      (let
         [current @current-player
