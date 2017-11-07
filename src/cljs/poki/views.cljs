@@ -52,12 +52,14 @@
 
     [:div.playboard
      [:div.head
-        [:h1 "Pig dice game"]
-        [:div "Goal:" (str @goal)]
-        (if @is-game-over
+      [:h1#title "Pig dice game"]
+      [:div "Goal: " (str @goal)]
+      [:div "  Players: " (str @players)]
+      [:div "  Round: " (str @round)]
+      (if @is-game-over
           [:h1 "The Winner is " (inc @current-player)])
-        [:br]
-        [:br]]
+      [:br]
+      [:br]]
 
      (let
         [current @current-player
