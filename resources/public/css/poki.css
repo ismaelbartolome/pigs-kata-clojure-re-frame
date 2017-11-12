@@ -1,4 +1,15 @@
 
+.controls {
+    display: flex;
+    flex-direction: column
+
+}
+
+.control {
+    flex:1;
+    align-self: flex-start;
+}
+
 
 .players {
 

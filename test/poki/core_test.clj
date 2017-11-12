@@ -91,7 +91,7 @@
           {:turn [1 2 3]})))
   (testing "random dice"
     (is (=
-          (reduce (fn [s _ ] (conj  s (random-dice :no-print))) #{} (range 100))
+          (reduce (fn [s _ ] (conj  s (random-dice))) #{} (range 100))
           #{ 1 2 3 4 5 6}))))
 
 (deftest game-over-test
@@ -170,6 +170,7 @@
            :round 1,
            :num-players 2,
            :win-points 10})))
+
   (testing "Tree players game"
     (is (=
           (pig-loop
@@ -185,4 +186,31 @@
            :num-players 3,
            :win-points 10}))))
 
+(deftest add-player-test
+  (testing "add-player-n"
+    (is (=
+          (add-player
+            { :turn [],
+             :player 0,
+             :points [11],
+             :round 1,
+             :num-players 1,
+             :win-points 10})
+          { :turn [],
+           :player 0,
+           :points [11 11],
+           :round 1,
+           :num-players 2,
+           :win-points 10})))
 
+  (testing "add-first-player"
+    (is (=
+          (add-player
+            (initial-state 0 10))
+
+          { :turn [],
+           :player 0,
+           :points [0],
+           :round 0,
+           :num-players 1,
+           :win-points 10}))))

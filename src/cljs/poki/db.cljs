@@ -3,6 +3,10 @@
 
 (def default-db
    (merge
-     (game/initial-state 2 10)
-     {:game-state :waiting-player  ;; :rolling  :showing-luck
-      :last-roll ""}))
+     (game/initial-state 0 0)
+     {  :goal-definition 100}))
+
+;; States
+;;  :waiting-player
+;;  :rolling
+;;  :showing-luck

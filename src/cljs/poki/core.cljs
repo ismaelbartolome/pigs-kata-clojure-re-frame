@@ -2,6 +2,7 @@
   (:require [reagent.core :as reagent]
             [re-frame.core :as re-frame]
             [poki.events :as events]
+            [poki.remote-events :as remote-events]
             [poki.views :as views]
             [poki.config :as config]))
 

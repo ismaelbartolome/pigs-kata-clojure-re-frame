@@ -47,3 +47,8 @@
   ::goal
   (fn [db]
     (:win-points db)))
+
+(re-frame/reg-sub
+  ::goal-definition
+  (fn [db]
+    (:goal-definition db)))

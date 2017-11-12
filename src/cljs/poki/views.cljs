@@ -1,90 +1,108 @@
 (ns poki.views
-  (:require [re-frame.core :as re-frame]
-            [poki.subs :as subs]
-            [clojure.string :as string]))
+  (:require [re-frame.core :as rf]
+            [poki.subs :as sb]
+            [poki.remote-events :as pre]
+            [reagent.core  :as reagent]
+            [clojure.string :as string]
+            [poki.components :refer [<sub evt> input-text]]))
 
 
-(defn roll-section [ n game-state last-roll]
-  (condp = game-state
-    :rolling   [:img { :src "images/dado.gif"}]
-    :showing-luck [:h4 (str last-roll)]
-    :waiting-player
+
+(defn info-section
+  []
+  [:div.playboard
+   [:div.head
+    [:div "Goal: " (str (<sub ::sb/goal-definition))]
+    [:div "  Players: " (str (<sub ::sb/num-players))]
+    [:div "  Round: " (str (<sub ::sb/round))]
+    (when
+      (and
+        (> (<sub ::sb/num-players) 0)
+        (<sub ::sb/is-game-over))
+      [:h1 "The Winner is " (inc (<sub ::sb/player))])
+    [:br]
+    [:br]]])
+
+
+(defn game-control
+  []
+  [:div.controls
+     (when (= (<sub ::sb/goal) 0)
+       [:div.control
+          [:button.control
+           {:on-click (evt> ::pre/ini-remote {:goal (<sub ::sb/goal-definition)})}
+           "Ini Game"]
+
+          [input-text
+           {:id "players"
+            :title (<sub ::sb/goal-definition)
+            :placeholder "Num of Players"
+            :reset-on-save false
+            :on-save #((evt> ::pre/keep-goal %))}]])
+
+     [:button.control
+       {:on-click (evt> ::pre/add-player-remote)}
+       "New player"]])
+
+
+
+
+(defn roll-section []
+  (condp = (<sub ::sb/game-state)
+    "rolling"   [:img { :src "images/dado.gif"}]
+    "showing-luck" [:h4 (str (<sub ::sb/last-roll))]
+    "showing-hold" [:h4 "HOLD"]
+    "waiting-player"
         [:div.buttons
            [:div.butttonbox
                [:button.button
-                  {:on-click #(re-frame/dispatch [:poki.events/roll-remote])}
+                  {:on-click (evt> ::pre/roll)}
                   "Roll"]]
            [:div.buttonbox
                [:button.button
-                  {:on-click #(re-frame/dispatch [:poki.events/hold])}
+                  {:on-click (evt> ::pre/hold)}
                   "Hold!"]]]))
 
 
+(defn player [n] [:div  "Player " (str (inc n))])
+(defn score [n] [:div  "Score:" (str ((<sub ::sb/game-score) n))])
+
 (defn player-actual-box
-  [n score round-score rolling? last-roll]
+  [n]
 
   [:div.player.current {:key (str "player-" n)}
-    [:div  "Player " (str (inc n))]
-    [:div  "Score:" score]
-    [:div    (string/join "-" round-score)]
-    (roll-section n rolling? last-roll)])
+    (player n)
+    (score n)
+    [:div    (string/join "-" (<sub ::sb/current-score))]
+    (roll-section)])
 
 (defn player-box
-  [ n score]
+  [ n]
   [:div.player {:key (str "player-" n)}
-    [:div  "Player :" (str (inc n))]
-    [:div  "Score  :" score]])
+    (player n)
+    (score n)])
 
+(defn player-section
+  []
+  [:div.players
+   (doall
+     (for
+       [player (range (<sub ::sb/num-players))]
+       (if
+         (and
+           (not (<sub ::sb/is-game-over))
+           (= (<sub ::sb/current-player) player))
+         (player-actual-box  player)
+         (player-box  player))))])
 
+(defn main-panel
+  []
+  [:div
+   [:h1#title "Pig dice game"]
 
+   (game-control)
 
-(defn main-panel []
-  (let [players (re-frame/subscribe [::subs/num-players])
-        current-player (re-frame/subscribe [::subs/current-player])
-        current-score (re-frame/subscribe [::subs/current-score])
-        game-score (re-frame/subscribe [::subs/game-score])
-        round (re-frame/subscribe [::subs/round])
-        is-game-over (re-frame/subscribe [::subs/is-game-over])
-        game-state (re-frame/subscribe [::subs/game-state])
-        last-roll (re-frame/subscribe [::subs/last-roll])
-        goal (re-frame/subscribe [::subs/goal])]
+   (info-section)
 
+   (player-section)])
 
-    [:div.playboard
-     [:div.head
-      [:h1#title "Pig dice game"]
-      [:div "Goal: " (str @goal)]
-      [:div "  Players: " (str @players)]
-      [:div "  Round: " (str @round)]
-      (if @is-game-over
-          [:h1 "The Winner is " (inc @current-player)])
-      [:br]
-      [:br]]
-
-     (let
-        [current @current-player
-         players-score @game-score
-         v-current-score @current-score
-         v-game-state @game-state
-         v-last-roll @last-roll
-         game-over? @is-game-over]
-        [:div.players
-         (for
-           [player (range @players)]
-           (if
-             (and (not game-over?) (= current player))
-             (player-actual-box
-               player
-               (players-score player)
-               v-current-score
-               v-game-state
-               v-last-roll)
-             (player-box
-               player
-               (players-score player))))])]))
-     ;[:div
-     ; [:div "Total players: " (str @players)]
-     ; [:div "current player: " (str @current-player)]
-     ; [:div "current score: " (str @current-score)]
-     ; [:div "score: " (str @game-score)]
-     ; [:div "round: " (str @round)]]]))

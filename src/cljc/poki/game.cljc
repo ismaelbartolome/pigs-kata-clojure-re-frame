@@ -8,8 +8,15 @@
     :round       0
     :num-players num-players
     :win-points  win-points})
+
   ([num-players]
    (initial-state num-players 100)))
+
+(defn add-player
+  [{:keys [num-players points] :as state}]
+  (-> state
+      (assoc :num-players (inc num-players))
+      (assoc :points (if (empty? points) [0] (conj points (apply max points))))))
 
 (defn next-player
   [ {:keys  [player num-players round] :as state}]
