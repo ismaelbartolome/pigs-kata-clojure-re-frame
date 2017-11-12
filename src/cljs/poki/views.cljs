@@ -19,7 +19,7 @@
       (and
         (> (<sub ::sb/num-players) 0)
         (<sub ::sb/is-game-over))
-      [:h1 "The Winner is " (inc (<sub ::sb/player))])
+      [:h1 "The Winner is " (inc (<sub ::sb/current-player))])
     [:br]
     [:br]]])
 

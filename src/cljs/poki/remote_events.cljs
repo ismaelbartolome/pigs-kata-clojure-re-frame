@@ -68,6 +68,7 @@
     [{db :db} _]
     (remote-event db "roll-shown" {}  ::get-response)))
 
+;; -------------------------------
 
 
 ;; HOLD
@@ -92,7 +93,7 @@
     [{db :db} _]
     (remote-event db "hold-done" {}  ::get-response)))
 
-
+;; --------------------------------------
 
 
 (rf/reg-event-db
