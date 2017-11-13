@@ -46,8 +46,8 @@
          [ s res]
          (-> s
              (game/roll-done res)
-             (assoc :game-state :showing-luck)))]
-
+             (assoc :game-state :showing-luck)
+             (assoc :last-roll res)))]
     (json/write-str
       (swap! game-state f res))))
 

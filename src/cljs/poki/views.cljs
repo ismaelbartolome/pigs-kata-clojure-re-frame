@@ -12,7 +12,7 @@
   []
   [:div.playboard
    [:div.head
-    [:div "Goal: " (str (<sub ::sb/goal-definition))]
+    [:div "Goal: " (str (<sub ::sb/goal))]
     [:div "  Players: " (str (<sub ::sb/num-players))]
     [:div "  Round: " (str (<sub ::sb/round))]
     (when
@@ -50,7 +50,7 @@
 (defn roll-section []
   (condp = (<sub ::sb/game-state)
     "rolling"   [:img { :src "images/dado.gif"}]
-    "showing-luck" [:h4 (str (<sub ::sb/last-roll))]
+    "showing-luck" [:h2 (str (<sub ::sb/last-roll))]
     "showing-hold" [:h4 "HOLD"]
     "waiting-player"
         [:div.buttons
