@@ -52,3 +52,8 @@
   ::goal-definition
   (fn [db]
     (:goal-definition db)))
+
+(re-frame/reg-sub
+  ::local-player
+  (fn [db]
+    (:local-player db)))

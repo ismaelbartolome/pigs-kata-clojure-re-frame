@@ -1,65 +1,62 @@
 (ns poki.random-service
   (:require
-    [compojure.core :refer :all]
-    [compojure.route :as route]
     [poki.game :as game]
-    [clojure.data.json :as json]
-    [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
-    [ring.middleware.cors :refer [wrap-cors]]))
+    [compojure.core :refer [GET POST defroutes routes]]
+    [compojure.handler :refer [api]]
+    [ring.util.response :refer [file-response response]]
+    [pneumatic-tubes.core :refer [receiver transmitter dispatch]]
+    [pneumatic-tubes.httpkit :refer [websocket-handler]]))
+
+(def tx (transmitter))
+(def dispatch-to (partial dispatch tx))
+
+
 
 (def game-state (atom {}))
-;; :game-state :waiting-player  ;; :rolling  :showing-luck : ""
 
-(defn roll-response
-  []
-  (do
-    (Thread/sleep 1000)
-    (json/write-str
-      {
-       :roll-result (game/random-dice)})))
 
 
 (defn ini-game
   [goal]
-  (json/write-str
-    (reset!
-      game-state
-      (assoc
-          (game/initial-state 0 (read-string goal))
-          :game-state :waiting-player))))
+
+  (reset!
+    game-state
+    (assoc
+        (game/initial-state 0 (read-string goal))
+        :game-state :waiting-player)))
 
 (defn add-player
   []
-  (json/write-str
-    (swap! game-state game/add-player)))
+  (swap! game-state game/add-player))
 
 (defn roll
   []
-  (json/write-str
-    (swap! game-state assoc :game-state :rolling)))
+  (swap! game-state assoc :game-state :rolling))
 
 (defn roll-done
   []
   (let
-    [res (game/random-dice)
-     f (fn
-         [ s res]
-         (-> s
-             (game/roll-done res)
-             (assoc :game-state :showing-luck)
-             (assoc :last-roll res)))]
-    (json/write-str
-      (swap! game-state f res))))
+    [res (game/random-dice)]
+    (swap! game-state
+           merge {
+                  :last-roll res
+                  :game-state :showing-luck})))
+
 
 (defn roll-shown
    []
-   (json/write-str
-     (swap! game-state assoc :game-state :waiting-player)))
+   (let
+     [f (fn
+          [s]
+          (-> s
+              (game/roll-done (:last-roll s))
+              (assoc :game-state :waiting-player)))]
+     (swap! game-state f)))
+
 
 (defn hold
   []
-  (json/write-str
-    (swap! game-state assoc :game-state :showing-hold)))
+  (swap! game-state assoc :game-state :showing-hold))
 
 
 (defn hold-done
@@ -70,29 +67,71 @@
            (-> s
                (game/do-hold)
                (assoc :game-state :waiting-player)))]
-     (json/write-str
-       (swap! game-state f))))
+     (swap! game-state f)))
 
-(defn refresh
-  []
-  (json/write-str
-    @game-state))
+(defn refresh-clients [ state ev]
+  (dispatch-to :all [:poki.remote-events/refresh-game state ev]))
 
-(defroutes app-routes
-           (GET "/" [] (roll-response))
-           (GET "/ini" [goal] (ini-game goal))
-           (GET "/add" [] (add-player))
-           (GET "/roll" [] (roll))
-           (GET "/roll-done" [] (roll-done))
-           (GET "/roll-shown" [] (roll-shown))
-           (GET "/hold" [] (hold))
-           (GET "/hold-done" [] (hold-done))
-           (GET "/refresh" [] (refresh))
-           (route/not-found "Not Found"))
+(def rx (receiver
+          {:tube/on-create
+           (fn [from _]
+             from)
+
+           :tube/on-destroy
+           (fn [from _]
+             from)
+
+           :poki.remote-events/ini-remote
+           (fn
+             [from [ev goal]]
+             (refresh-clients (ini-game goal) ev))
+
+           :poki.remote-events/add-player-remote
+           (fn
+             [from [ev]]
+             (let
+               [new-state (add-player)
+                player (dec (:num-players new-state))]
+               (dispatch-to from [:poki.remote-events/player-assigned player])
+               (refresh-clients new-state ev)
+               (assoc from :player player)))
 
 
-(def app
-  (wrap-cors
-    (wrap-defaults app-routes site-defaults)
-    :access-control-allow-origin [#"http://localhost:3449"]
-    :access-control-allow-methods [:get]))
+           :poki.remote-events/roll
+           (fn
+             [from [ev]]
+             (refresh-clients (roll) ev)
+             (dispatch-to from [:poki.remote-events/roll-response])
+             from)
+
+           :poki.remote-events/roll-done
+           (fn
+             [from [ev]]
+             (refresh-clients (roll-done) ev)
+             (dispatch-to from [:poki.remote-events/roll-done-response])
+             from)
+
+           :poki.remote-events/roll-shown
+           (fn
+             [from [ev]]
+             (refresh-clients (roll-shown) ev)
+             from)
+
+           :poki.remote-events/hold
+           (fn
+             [from [ev]]
+             (refresh-clients (hold) ev)
+             (dispatch-to from [:poki.remote-events/hold-response])
+             from)
+
+           :poki.remote-events/hold-shown
+           (fn
+             [from [ev]]
+             (println "SERVER" ev)
+             (refresh-clients (hold-done) ev)
+             from)}))
+
+
+(defroutes handler
+           (GET "/" [] (file-response "index.html" {:root "resources/public"}))
+           (GET "/ws" [] (websocket-handler rx)))

@@ -54,6 +54,7 @@
 
 (defn winner?
   [ {:keys  [points player win-points] :as state}]
+
   (>= (points player) win-points))
 
 (defn do-hold
@@ -76,8 +77,6 @@
     (= value 1)
     (one state)
     (dice state value)))
-
-
 
 (defn do-dice
   "Dice decision"

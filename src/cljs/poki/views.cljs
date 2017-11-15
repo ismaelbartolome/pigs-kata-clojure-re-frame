@@ -12,9 +12,10 @@
   []
   [:div.playboard
    [:div.head
-    [:div "Goal: " (str (<sub ::sb/goal))]
-    [:div "  Players: " (str (<sub ::sb/num-players))]
-    [:div "  Round: " (str (<sub ::sb/round))]
+    [:span "Goal: " (str (<sub ::sb/goal))]
+    [:span " Players: " (str (<sub ::sb/num-players))]
+    [:span " Round: " (str (<sub ::sb/round))]
+    [:span " State:" (str (<sub ::sb/game-state))]
     (when
       (and
         (> (<sub ::sb/num-players) 0)
@@ -30,7 +31,7 @@
      (when (= (<sub ::sb/goal) 0)
        [:div.control
           [:button.control
-           {:on-click (evt> ::pre/ini-remote {:goal (<sub ::sb/goal-definition)})}
+           {:on-click (evt> ::pre/ini-remote (<sub ::sb/goal-definition))}
            "Ini Game"]
 
           [input-text
@@ -39,29 +40,37 @@
             :placeholder "Num of Players"
             :reset-on-save false
             :on-save #((evt> ::pre/keep-goal %))}]])
+     (let
+       [ ap (<sub ::sb/local-player)]
+       (if
+         ap
+         [:h2 "Player :" (str (inc ap))]
+         [:button.control
+           {:on-click (evt> ::pre/add-player-remote)}
+           "Join
 
-     [:button.control
-       {:on-click (evt> ::pre/add-player-remote)}
-       "New player"]])
+           "]))])
 
 
 
 
 (defn roll-section []
   (condp = (<sub ::sb/game-state)
-    "rolling"   [:img { :src "images/dado.gif"}]
-    "showing-luck" [:h2 (str (<sub ::sb/last-roll))]
-    "showing-hold" [:h4 "HOLD"]
-    "waiting-player"
-        [:div.buttons
-           [:div.butttonbox
-               [:button.button
-                  {:on-click (evt> ::pre/roll)}
-                  "Roll"]]
-           [:div.buttonbox
-               [:button.button
-                  {:on-click (evt> ::pre/hold)}
-                  "Hold!"]]]))
+    :rolling   [:img { :src "images/dado.gif"}]
+    :showing-luck [:h2 (str (<sub ::sb/last-roll))]
+    :showing-hold [:h4 "HOLD"]
+    :waiting-player
+        (when
+          (= (<sub ::sb/local-player) (<sub ::sb/current-player))
+          [:div.buttons
+             [:div.butttonbox
+                 [:button.button
+                    {:on-click (evt> ::pre/roll)}
+                    "Roll"]]
+             [:div.buttonbox
+                 [:button.button
+                    {:on-click (evt> ::pre/hold)}
+                    "Hold!"]]])))
 
 
 (defn player [n] [:div  "Player " (str (inc n))])

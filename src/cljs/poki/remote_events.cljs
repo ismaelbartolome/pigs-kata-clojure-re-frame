@@ -1,106 +1,129 @@
 (ns poki.remote-events
   (:require
     [re-frame.core :as rf]
-    [ajax.core     :as ajax]
-    [day8.re-frame.http-fx]))
+    [pneumatic-tubes.core :as tubes]))
 
-(defn remote-event
-  [ db event params get-event]
-  (println "remote-event"  (str get-event))
-  {
-   :http-xhrio {:method          :get
-                :uri             (str "http://localhost:3000/" event)
-                :params          params
-                :format          (ajax/json-request-format)
-                :response-format (ajax/json-response-format {:keywords? true})
-                :on-success       [ get-event]
-                :on-failure      [::bad-response]}
-   :db db})
+(defn on-receive [event-v]
+  (.log js/console "received from server:" (str event-v))
+  (rf/dispatch event-v))
 
-(rf/reg-event-fx
+(def tube (tubes/tube (str "ws://localhost:3449/ws") on-receive))
+(def send-to-server (rf/after (fn [_ v] (tubes/dispatch tube v))))
+
+(defn only-dispach-if-local
+  [gs]
+  (if
+    (=
+      (get-in gs [:db :player])
+      (get-in gs [:db :local-player]))
+    gs
+    (dissoc gs :dispatch-later)))
+
+(rf/reg-event-db
   ::ini-remote
+  send-to-server
   (fn
-    [{db :db} [_ params]]
-    (remote-event db "ini" params  ::get-response)))
+    [ db [_ goal]]
+    db))
 
-(rf/reg-event-fx
+
+(rf/reg-event-db
   ::add-player-remote
+  send-to-server
   (fn
-    [{db :db} _]
-    (remote-event db "add" {} ::get-response)))
+    [db _]
+    db))
+
+(rf/reg-event-db
+  ::player-assigned
+  (fn
+    [db [_ player]]
+    (assoc db :local-player player)))
+
 
 
 ;; ROLL
 ;; -----------------------------
-(rf/reg-event-fx
+(rf/reg-event-db
   ::roll
+  send-to-server
   (fn
-    [{db :db} _]
-    (remote-event db "roll" {}  ::roll-response)))
+    [db _]
+    db))
 
 (rf/reg-event-fx
   ::roll-response
   (fn
-    [{db :db} [ _ state-back]]
-    {
-     :db (merge db state-back)
-     :dispatch-later [{:ms 3000 :dispatch [::roll-done]}]}))
-
-
-(rf/reg-event-fx
-  ::roll-done
-  (fn
     [{db :db} _]
-    (remote-event db "roll-done" {}  ::roll-done-response)))
+    (only-dispach-if-local
+      {
+       :db db
+       :dispatch-later [{:ms 3000 :dispatch [::roll-done]}]})))
+
+
+(rf/reg-event-db
+  ::roll-done
+  send-to-server
+  (fn
+    [db _]
+    db))
 
 (rf/reg-event-fx
   ::roll-done-response
   (fn
-    [{db :db} [ _ state-back]]
-    {
-     :db (merge db state-back)
-     :dispatch-later [{:ms 1000 :dispatch [::roll-shown]}]}))
-
-
-(rf/reg-event-fx
-  ::roll-shown
-  (fn
     [{db :db} _]
-    (remote-event db "roll-shown" {}  ::get-response)))
+    (only-dispach-if-local
+      {
+       :db db
+       :dispatch-later [{:ms 1000 :dispatch [::roll-shown]}]})))
+
+
+(rf/reg-event-db
+  ::roll-shown
+  send-to-server
+  (fn
+    [db _]
+    db))
 
 ;; -------------------------------
 
 
 ;; HOLD
 ;; -------------------------------
-(rf/reg-event-fx
+(rf/reg-event-db
   ::hold
+  send-to-server
   (fn
-    [{db :db} _]
-    (remote-event db "hold" {}  ::hold-response)))
+    [db _]
+    db))
 
 (rf/reg-event-fx
   ::hold-response
   (fn
-    [{db :db} [ _ state-back]]
-    {
-     :db (merge db state-back)
-     :dispatch-later [{:ms 1000 :dispatch [::hold-shown]}]}))
-
-(rf/reg-event-fx
-  ::hold-shown
-  (fn
     [{db :db} _]
-    (remote-event db "hold-done" {}  ::get-response)))
+    (only-dispach-if-local
+      {
+       :db db
+       :dispatch-later [{:ms 1000 :dispatch [::hold-shown]}]})))
+
+
+
+(rf/reg-event-db
+  ::hold-shown
+  send-to-server
+  (fn
+    [db _]
+    db))
 
 ;; --------------------------------------
 
 
 (rf/reg-event-db
-  ::get-response
+  ::refresh-game
   (fn
-    [db [ _ state-back]]
+    [db [ _ state-back ori]]
     (println "get-response" (str state-back))
+    (println "MERGESTATE" ori (merge db state-back))
     (merge db state-back)))
 
 
@@ -113,10 +136,4 @@
         (assoc :goal-definition value))))
 
 
-(rf/reg-event-db
-  ::bad-response
-  (fn
-    [db [_ response]]           ;; destructure the response from the event vector
-    (-> db
-        (assoc :game-state :waiting-player) ;; take away that "Loading ..." UI
-        (assoc :error (js->clj response)))))  ;; fairly lame processing
+((tubes/create! tube))

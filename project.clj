@@ -4,31 +4,26 @@
                  [org.clojure/clojurescript "1.9.908"]
                  [reagent "0.7.0"]
                  [re-frame "0.10.2"]
+                 [compojure "1.5.2"]
+                 [ring "1.5.1"]
+                 [pneumatic-tubes "0.2.0"]]
 
-                 ;;random-service
-                 [org.clojure/data.json "0.2.6"]
 
-                 ;; compojure
-                 [compojure "1.5.1"]
-                 [ring/ring-defaults "0.2.1"]
-                 [ring-cors "0.1.11"]
-                 [binaryage/devtools "0.9.7"]]
 
 
   :plugins
     [
      [lein-cljsbuild "1.1.5"]
-     [lein-ring "0.9.7"]]
-
-  :ring {:handler poki.random-service/app}
+     [lein-figwheel "0.5.10"]]
 
   :min-lein-version "2.5.3"
 
-  :source-paths ["src/cljc" "src/clj" ]
+  :source-paths ["src/cljc" "src/clj"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
-  :figwheel {:css-dirs ["resources/public/css"]}
+  :figwheel {:css-dirs ["resources/public/css"]
+             :ring-handler poki.random-service/handler}
 
   :profiles
   {:dev
@@ -42,6 +37,7 @@
     :plugins      [
                    [lein-figwheel "0.5.13"]
                    [lein-auto "0.1.3"]]}}
+
 
   :cljsbuild
   {:builds
