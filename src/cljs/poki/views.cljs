@@ -15,7 +15,10 @@
     [:span "Goal: " (str (<sub ::sb/goal))]
     [:span " Players: " (str (<sub ::sb/num-players))]
     [:span " Round: " (str (<sub ::sb/round))]
+    [:span " Local player:" (str (<sub ::sb/local-player))]
     [:span " State:" (str (<sub ::sb/game-state))]
+
+
     (when
       (and
         (> (<sub ::sb/num-players) 0)
@@ -109,9 +112,9 @@
   [:div
    [:h1#title "Pig dice game"]
 
-   (game-control)
+   [game-control]
 
-   (info-section)
+   [info-section]
 
-   (player-section)])
+   [player-section]])
 
